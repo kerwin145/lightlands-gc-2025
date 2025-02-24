@@ -4,6 +4,10 @@ body, html { margin: 0; overflow: hidden; }
 #screen1 { background: lightblue; }
 #screen2 { background: lightgreen; }
 
+h1, h2, h3, h4, h5, h6{
+    margin: 0;
+}
+
 .screen button{
     position: absolute;
     top: 1rem;

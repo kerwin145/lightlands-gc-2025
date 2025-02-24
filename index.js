@@ -6,53 +6,218 @@ function switchScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
+/* Anchored at bottom middle by default */
+function createScaledCanvas(image, scaleFactor) {
+    console.log("Making scaled canvas");
+    console.log(image.width);
+    
+    // Set the new scaled dimensions
+    const scaledWidth = image.width / scaleFactor;
+    const scaledHeight = image.height / scaleFactor;
+
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = scaledWidth
+    offscreenCanvas.height = scaledHeight
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+
+    // Draw the image into the expanded canvas
+    offscreenCtx.drawImage(image, 0, 0, scaledWidth, scaledHeight);
+
+    // offscreenCtx.strokeStyle = 'red';  // Set the border color
+    // offscreenCtx.lineWidth = 2;        // Set the border width
+    // offscreenCtx.strokeRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);  // Draw the border
+
+    return offscreenCanvas;
+}
+
+
 const switch_to_2_btn = document.querySelector("#screen1 button")
 const switch_to_1_btn = document.querySelector("#screen2 button")
 
 // Add listeners
-switch_to_2_btn.addEventListener("click", ()=>switchScreen('screen2'))
 switch_to_1_btn.addEventListener("click", ()=>switchScreen('screen1'))
 
 // Parallax Setup
 const canvas = document.getElementById("parallaxCanvas");
 const ctx = canvas.getContext("2d");
+canvas.tabIndex = 1; 
+canvas.focus();
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+
+const WIDTH = window.innerWidth, HEIGHT = window.innerHeight
+console.log(window.innerWidth, HEIGHT)
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
 
 const bgImage = new Image();
 const treeLayer1 = new Image();
 const treeLayer2 = new Image();
 
+let imagesLoaded = 0
+function imageLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded === 3) { // Total images: bg + 2 layers
+        requestAnimationFrame(draw); // Start the draw loop
+    }
+}
+
+let treeLayer1Canvas, treeLayer2Canvas, layer1XPositions, layer2XPositions;
+
+function isMouseInImageBounds(mouseX, mouseY, x, y, width, height) {
+    return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+}
+
+// Assign onload handlers
+bgImage.onload = imageLoaded;
+treeLayer1.onload = function() {
+    treeLayer1Canvas = createScaledCanvas(treeLayer1, 2, 0.5, 1);
+    layer1XPositions = new Array(LAYER1_COUNT).fill(0).map((_, idx) => 
+        idx * spacing + (WIDTH - ((LAYER1_COUNT-1) * spacing + treeLayer1Canvas.width)) / 2);
+    imageLoaded();
+};
+treeLayer2.onload = function() {
+    treeLayer2Canvas = createScaledCanvas(treeLayer2, 4, 0.5, 1);
+    layer2XPositions = new Array(LAYER2_COUNT).fill(0).map((_, idx) => 
+        idx * spacing + (WIDTH - ((LAYER2_COUNT-1) * spacing + treeLayer2Canvas.width)) / 2);
+    imageLoaded();
+};
+
+// Set image sources after assigning onload handlers
 bgImage.src = "background.jpg";
-treeLayer1.src = "lighthouse.jpg";
-treeLayer2.src = "lighthouse.jpg";
+treeLayer1.src = "lighthouse.png";
+treeLayer2.src = "lighthouse.png";
 
 let scrollSpeed = 0;
-
 window.addEventListener("mousemove", (event) => {
     let moveFactor = event.clientX / canvas.width;
     scrollSpeed = (moveFactor - 0.5) * 10;
 });
 
+let LAYER1_COUNT = 3, LAYER2_COUNT = 2;
+ImageBoundsLayer1 = new Array(LAYER1_COUNT)
+ImageBoundsLayer2 = new Array(LAYER2_COUNT)
+const HOVER_ZOOM = 1.15
+let hoveringOver1 = -1
+let hoveringOver2 = -1
+let spacing = WIDTH * 0.45;
+
+let brightness1 = new Array(LAYER1_COUNT).fill(0) 
+let brightness2 = new Array(LAYER2_COUNT).fill(0) 
+let brightnessMap = {
+    "0": "brightness(0.1)",
+    "1": "brightness(0.25)",
+    "2": "brightness(0.4)",
+    "3": "brightness(0.55)",
+    "4": "brightness(0.7)",
+    "5": "brightness(0.85)",
+    "6": "brightness(1)"
+  }
+
+/* Dragging ! */
+let isDragging = false;
+let dragOffsetX = 0;
+let lastMouseX = 0;
+canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastMouseX = e.clientX;
+});
+
+function getHoverIndex(imageBounds, mouseX, mouseY){
+    for(let i = 0; i < imageBounds.length; i++){
+        let bounds = imageBounds[i]
+        if(isMouseInImageBounds(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height)){
+            return i
+        }
+    }
+    return -1
+}
+canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        deltaX = e.clientX - lastMouseX
+        dragOffsetX -= deltaX
+        lastMouseX = e.clientX
+    }
+    hoveringOver1 = getHoverIndex(ImageBoundsLayer1, e.clientX, e.clientY)
+    hoveringOver2 = getHoverIndex(ImageBoundsLayer2, e.clientX, e.clientY)
+});
+
+canvas.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+canvas.addEventListener('mouseout', () => {
+    isDragging = false;
+});
+
+canvas.addEventListener('dblclick', (e) => {
+    switchScreen('screen2')
+})
+
+function updateBrightness(brightnessArr, idx, val) {
+    let curVal = brightnessArr[idx]
+    if(val === 1){
+        brightnessArr[idx] = Math.min(curVal + 1, 6)
+    }
+    else if(val === -1){
+        brightnessArr[idx] = Math.max(curVal-1, 0)
+    }
+}
+
+canvas.addEventListener('keyup', (e) =>{
+    let delta = 0
+    if(e.code == 'ArrowUp')
+        delta = 1
+    else if (e.code == 'ArrowDown')
+        delta = -1
+
+    if(hoveringOver1 != -1){
+        updateBrightness(brightness1, hoveringOver1, delta)
+    }else if(hoveringOver2 != -1){
+        updateBrightness(brightness2, hoveringOver2, delta)
+    }
+
+})
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    let bgX = -scrollSpeed * 0.2;
-    let tree1X = -scrollSpeed * 0.5;
-    let tree2X = -scrollSpeed * 1.0;
+    ctx.drawImage(bgImage, WIDTH * -.25 - dragOffsetX * 0.1, 0, WIDTH * 1.5, HEIGHT)
+    if (treeLayer2Canvas) {
+        layer2XPositions.forEach((pos, idx) => {
+            let x = pos - dragOffsetX * 0.8, y = HEIGHT * 0.65 - treeLayer2Canvas.height
+            ctx.save()
+            ctx.filter = brightnessMap[brightness2[idx]]
+            if(idx == hoveringOver2){
+                let extraX = treeLayer2Canvas.width * (HOVER_ZOOM-1)
+                let extraY = treeLayer2Canvas.height * (HOVER_ZOOM-1)
+                ctx.drawImage(treeLayer2Canvas, x - extraX/2, y - extraY/2, treeLayer2Canvas.width + extraX, treeLayer2Canvas.height + extraY);
+            }else{
+                ctx.drawImage(treeLayer2Canvas, x, y);
+            }
+            ctx.restore()
+            ImageBoundsLayer2[idx] = {x, y, width:treeLayer2Canvas.width, height: treeLayer2Canvas.height}
+        });
+    }
+    if (treeLayer1Canvas) {
+        layer1XPositions.forEach((pos, idx) => {
+            let x = pos - dragOffsetX, y = HEIGHT * 0.8 - treeLayer1Canvas.height
+            ctx.save()
+            ctx.filter = brightnessMap[brightness1[idx]]
+            if (idx == hoveringOver1){ // note that the bounds won't be impacted by this transform
+                let extraX = treeLayer1Canvas.width * (HOVER_ZOOM-1)
+                let extraY = treeLayer1Canvas.height * (HOVER_ZOOM-1)
+                ctx.drawImage(treeLayer1Canvas, x - extraX/2, y - extraY/2, treeLayer1Canvas.width + extraX, treeLayer1Canvas.height + extraY);
+            }else{
+                ctx.drawImage(treeLayer1Canvas, x, y);
+            }
+            ctx.restore()
+            ImageBoundsLayer1[idx] = {x, y, width:treeLayer1Canvas.width, height: treeLayer1Canvas.height}
+        });
 
-    ctx.drawImage(bgImage, bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(treeLayer1, tree1X, 0, canvas.width, canvas.height);
-    ctx.drawImage(treeLayer2, tree2X, 0, canvas.width, canvas.height);
+    }
+
+    // ctx.drawImage(treeLayer2, tree2X, 0, treeLayer2.width/scaleFactorTreeLayer2, treeLayer2.height/scaleFactorTreeLayer2);
 
     requestAnimationFrame(draw);
 }
-
-bgImage.onload = () => {
-    treeLayer1.onload = () => {
-        treeLayer2.onload = () => {
-            draw();
-        };
-    };
-};
