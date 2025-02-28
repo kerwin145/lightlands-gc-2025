@@ -1,8 +1,8 @@
 body, html { margin: 0; overflow: hidden; }
+#screen1 { background: lightblue; }
+#screen2 { background: url("background.jpg"); }
 .screen { display: none; width: 100vw; height: 100vh; }
 .active { display: block; }
-#screen1 { background: lightblue; }
-#screen2 { background: lightgreen; }
 
 h1, h2, h3, h4, h5, h6{
     margin: 0;
@@ -12,4 +12,16 @@ h1, h2, h3, h4, h5, h6{
     position: absolute;
     top: 1rem;
     left: 1rem;
+}
+
+
+#lighthouse{
+    width: 15vw;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    transform: translateX(-50%);
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
 }

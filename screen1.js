@@ -6,6 +6,10 @@ function switchScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
+function prepareScreen1(){
+    canvas.focus()
+}
+
 /* Anchored at bottom middle by default */
 function createScaledCanvas(image, scaleFactor) {
     console.log("Making scaled canvas");
@@ -33,9 +37,6 @@ function createScaledCanvas(image, scaleFactor) {
 
 const switch_to_2_btn = document.querySelector("#screen1 button")
 const switch_to_1_btn = document.querySelector("#screen2 button")
-
-// Add listeners
-switch_to_1_btn.addEventListener("click", ()=>switchScreen('screen1'))
 
 // Parallax Setup
 const canvas = document.getElementById("parallaxCanvas");
@@ -70,13 +71,13 @@ function isMouseInImageBounds(mouseX, mouseY, x, y, width, height) {
 // Assign onload handlers
 bgImage.onload = imageLoaded;
 treeLayer1.onload = function() {
-    treeLayer1Canvas = createScaledCanvas(treeLayer1, 2, 0.5, 1);
+    treeLayer1Canvas = createScaledCanvas(treeLayer1, 2.5, 0.5, 1);
     layer1XPositions = new Array(LAYER1_COUNT).fill(0).map((_, idx) => 
         idx * spacing + (WIDTH - ((LAYER1_COUNT-1) * spacing + treeLayer1Canvas.width)) / 2);
     imageLoaded();
 };
 treeLayer2.onload = function() {
-    treeLayer2Canvas = createScaledCanvas(treeLayer2, 4, 0.5, 1);
+    treeLayer2Canvas = createScaledCanvas(treeLayer2, 4.5, 0.5, 1);
     layer2XPositions = new Array(LAYER2_COUNT).fill(0).map((_, idx) => 
         idx * spacing + (WIDTH - ((LAYER2_COUNT-1) * spacing + treeLayer2Canvas.width)) / 2);
     imageLoaded();
@@ -104,12 +105,12 @@ let spacing = WIDTH * 0.45;
 let brightness1 = new Array(LAYER1_COUNT).fill(0) 
 let brightness2 = new Array(LAYER2_COUNT).fill(0) 
 let brightnessMap = {
-    "0": "brightness(0.1)",
-    "1": "brightness(0.25)",
-    "2": "brightness(0.4)",
-    "3": "brightness(0.55)",
-    "4": "brightness(0.7)",
-    "5": "brightness(0.85)",
+    "0": "brightness(0.4)",
+    "1": "brightness(0.5)",
+    "2": "brightness(0.6)",
+    "3": "brightness(0.7)",
+    "4": "brightness(0.8)",
+    "5": "brightness(0.9)",
     "6": "brightness(1)"
   }
 
@@ -125,6 +126,8 @@ canvas.addEventListener('mousedown', (e) => {
 function getHoverIndex(imageBounds, mouseX, mouseY){
     for(let i = 0; i < imageBounds.length; i++){
         let bounds = imageBounds[i]
+        if (!bounds) 
+            break
         if(isMouseInImageBounds(mouseX, mouseY, bounds.x, bounds.y, bounds.width, bounds.height)){
             return i
         }
@@ -150,7 +153,13 @@ canvas.addEventListener('mouseout', () => {
 });
 
 canvas.addEventListener('dblclick', (e) => {
-    switchScreen('screen2')
+    if(hoveringOver1 != -1){
+        switchScreen('screen2')
+        prepareScreen(hoveringOver1, brightness1[hoveringOver1])
+    }else if(hoveringOver2 != -2){
+        switchScreen('screen2')
+        prepareScreen(hoveringOver2, brightness2[hoveringOver2])
+    }  
 })
 
 function updateBrightness(brightnessArr, idx, val) {
@@ -177,7 +186,6 @@ canvas.addEventListener('keyup', (e) =>{
     }
 
 })
-
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
