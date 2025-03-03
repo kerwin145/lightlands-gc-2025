@@ -6,7 +6,26 @@ function switchScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
+var screen1Listener = (e) => {
+    let delta = 0
+    if(e.code == 'ArrowUp')
+        delta = 1
+    else if (e.code == 'ArrowDown')
+        delta = -1
+
+    if(hoveringOver1 != -1){
+        updateBrightness(brightness1, hoveringOver1, delta)
+    }else if(hoveringOver2 != -1){
+        updateBrightness(brightness2, hoveringOver2, delta)
+    }
+
+}
+var screen2Listener
+
 function prepareScreen1(){
+    if(screen2Listener)
+        screen.removeEventListener('keyup', screen2Listener);
+    canvas.addEventListener('keyup', screen1Listener)
     canvas.focus()
 }
 
@@ -37,13 +56,13 @@ function createScaledCanvas(image, scaleFactor) {
 
 const switch_to_2_btn = document.querySelector("#screen1 button")
 const switch_to_1_btn = document.querySelector("#screen2 button")
+const question_preview = document.querySelector('.questionPreview')
 
 // Parallax Setup
 const canvas = document.getElementById("parallaxCanvas");
 const ctx = canvas.getContext("2d");
 canvas.tabIndex = 1; 
 canvas.focus();
-
 
 const WIDTH = window.innerWidth, HEIGHT = window.innerHeight
 console.log(window.innerWidth, HEIGHT)
@@ -105,11 +124,11 @@ let spacing = WIDTH * 0.45;
 let brightness1 = new Array(LAYER1_COUNT).fill(0) 
 let brightness2 = new Array(LAYER2_COUNT).fill(0) 
 let brightnessMap = {
-    "0": "brightness(0.4)",
-    "1": "brightness(0.5)",
-    "2": "brightness(0.6)",
-    "3": "brightness(0.7)",
-    "4": "brightness(0.8)",
+    "0": "brightness(0.35)",
+    "1": "brightness(0.46)",
+    "2": "brightness(0.57)",
+    "3": "brightness(0.68)",
+    "4": "brightness(0.79)",
     "5": "brightness(0.9)",
     "6": "brightness(1)"
   }
@@ -142,6 +161,15 @@ canvas.addEventListener('mousemove', (e) => {
     }
     hoveringOver1 = getHoverIndex(ImageBoundsLayer1, e.clientX, e.clientY)
     hoveringOver2 = getHoverIndex(ImageBoundsLayer2, e.clientX, e.clientY)
+    if(hoveringOver1 !== -1){
+        $(question_preview).text(questionAndAnswers[hoveringOver1]["question"])
+    }
+    else if(hoveringOver2 !== -1){
+        $(question_preview).text(questionAndAnswers[hoveringOver2 + 3]["question"])
+    }
+    else{
+        $(question_preview).text("")
+    }
 });
 
 canvas.addEventListener('mouseup', () => {
@@ -155,10 +183,10 @@ canvas.addEventListener('mouseout', () => {
 canvas.addEventListener('dblclick', (e) => {
     if(hoveringOver1 != -1){
         switchScreen('screen2')
-        prepareScreen(hoveringOver1, brightness1[hoveringOver1])
+        prepareScreen2(hoveringOver1, brightness1[hoveringOver1], 1)
     }else if(hoveringOver2 != -2){
         switchScreen('screen2')
-        prepareScreen(hoveringOver2, brightness2[hoveringOver2])
+        prepareScreen2(hoveringOver2 + 3, brightness2[hoveringOver2], 2)
     }  
 })
 
@@ -168,24 +196,9 @@ function updateBrightness(brightnessArr, idx, val) {
         brightnessArr[idx] = Math.min(curVal + 1, 6)
     }
     else if(val === -1){
-        brightnessArr[idx] = Math.max(curVal-1, 0)
+        brightnessArr[idx] = Math.max(curVal - 1, 0)
     }
 }
-
-canvas.addEventListener('keyup', (e) =>{
-    let delta = 0
-    if(e.code == 'ArrowUp')
-        delta = 1
-    else if (e.code == 'ArrowDown')
-        delta = -1
-
-    if(hoveringOver1 != -1){
-        updateBrightness(brightness1, hoveringOver1, delta)
-    }else if(hoveringOver2 != -1){
-        updateBrightness(brightness2, hoveringOver2, delta)
-    }
-
-})
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -229,3 +242,5 @@ function draw() {
 
     requestAnimationFrame(draw);
 }
+
+prepareScreen1()
