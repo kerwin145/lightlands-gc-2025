@@ -27,6 +27,7 @@ function prepareScreen2(houseIdx, brightnessLevel, lighthouseGroup){
         let delta = 0;
         if (e.code == 'ArrowUp') delta = 1;
         else if (e.code == 'ArrowDown') delta = -1;
+        else return
 
         if (lighthouseGroup == 1) {
             brightness1[houseIdx] = brightness1[houseIdx] + delta
@@ -37,6 +38,7 @@ function prepareScreen2(houseIdx, brightnessLevel, lighthouseGroup){
             
             brightness1[houseIdx] = Math.min(6, Math.max(0, brightness1[houseIdx]));
             lighthouse.style.filter = brightnessMap[brightness1[houseIdx]]
+            $(".questionPreview2").html(questionAndAnswers[hoveringOver1]["question"] + "<br><small>" + "⭐".repeat(brightness1[hoveringOver1]) + "</small>")
 
         } else if (lighthouseGroup == 2) {
             brightness2[houseIdx] = brightness2[houseIdx] + delta
@@ -47,6 +49,7 @@ function prepareScreen2(houseIdx, brightnessLevel, lighthouseGroup){
             
             brightness2[houseIdx] = Math.min(6, Math.max(0, brightness2[houseIdx]));
             lighthouse.style.filter = brightnessMap[brightness2[houseIdx]]
+            $(".questionPreview2").html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br><small>" + "⭐".repeat(brightness2[hoveringOver2]) + "</small>")
         }
     };
 
@@ -55,7 +58,12 @@ function prepareScreen2(houseIdx, brightnessLevel, lighthouseGroup){
 
     $("#lighthouse").get(0).style.filter = brightnessMap[brightnessLevel]
     $("#answers").text("")
-    $(".questionPreview2").text(questionAndAnswers[houseIdx]["question"])
+    if (lighthouseGroup == 1){
+        $(".questionPreview2").html(questionAndAnswers[hoveringOver1]["question"] + "<br><small>" + "⭐".repeat(brightness1[hoveringOver1]) + "</small>")
+    }
+    if (lighthouseGroup == 2){
+        $(".questionPreview2").html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br><small>" + "⭐".repeat(brightness2[hoveringOver2]) + "</small>")
+    }
     $.each(responses["answers"], function(idx, text){
         let newDiv = $("<div>").addClass('answer-single').text(text)
         $(answers_DOM).append(newDiv)

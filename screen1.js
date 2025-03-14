@@ -15,8 +15,11 @@ var screen1Listener = (e) => {
 
     if(hoveringOver1 != -1){
         updateBrightness(brightness1, hoveringOver1, delta)
+        $(question_preview).html(questionAndAnswers[hoveringOver1]["question"] + "<br>" + "⭐".repeat(brightness1[hoveringOver1]))
+        
     }else if(hoveringOver2 != -1){
         updateBrightness(brightness2, hoveringOver2, delta)
+        $(question_preview).html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br>" + "⭐".repeat(brightness2[hoveringOver2]))
     }
 
 }
@@ -125,11 +128,11 @@ let brightness1 = new Array(LAYER1_COUNT).fill(0)
 let brightness2 = new Array(LAYER2_COUNT).fill(0) 
 let brightnessMap = {
     "0": "brightness(0.35)",
-    "1": "brightness(0.46)",
-    "2": "brightness(0.57)",
-    "3": "brightness(0.68)",
-    "4": "brightness(0.79)",
-    "5": "brightness(0.9)",
+    "1": "brightness(0.44)",
+    "2": "brightness(0.53)",
+    "3": "brightness(0.62)",
+    "4": "brightness(0.71)",
+    "5": "brightness(0.8)",
     "6": "brightness(1)"
   }
 
@@ -162,10 +165,10 @@ canvas.addEventListener('mousemove', (e) => {
     hoveringOver1 = getHoverIndex(ImageBoundsLayer1, e.clientX, e.clientY)
     hoveringOver2 = getHoverIndex(ImageBoundsLayer2, e.clientX, e.clientY)
     if(hoveringOver1 !== -1){
-        $(question_preview).text(questionAndAnswers[hoveringOver1]["question"])
+        $(question_preview).html(questionAndAnswers[hoveringOver1]["question"] + "<br>" + "⭐".repeat(brightness1[hoveringOver1]))
     }
     else if(hoveringOver2 !== -1){
-        $(question_preview).text(questionAndAnswers[hoveringOver2 + 3]["question"])
+        $(question_preview).html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br>" + "⭐".repeat(brightness2[hoveringOver2]))
     }
     else{
         $(question_preview).text("")
@@ -186,7 +189,7 @@ canvas.addEventListener('dblclick', (e) => {
         prepareScreen2(hoveringOver1, brightness1[hoveringOver1], 1)
     }else if(hoveringOver2 != -2){
         switchScreen('screen2')
-        prepareScreen2(hoveringOver2 + 3, brightness2[hoveringOver2], 2)
+        prepareScreen2(hoveringOver2, brightness2[hoveringOver2], 2)
     }  
 })
 
@@ -237,10 +240,27 @@ function draw() {
         });
 
     }
-
+    console.log("update")
     // ctx.drawImage(treeLayer2, tree2X, 0, treeLayer2.width/scaleFactorTreeLayer2, treeLayer2.height/scaleFactorTreeLayer2);
-
-    requestAnimationFrame(draw);
 }
 
-prepareScreen1()
+let lastDrawTime = 0;
+const targetFPS = 60;
+const frameTime = 1000 / targetFPS; // Time per frame in ms
+
+function gameLoop(timestamp) {
+    if (!lastDrawTime) lastDrawTime = timestamp;
+
+    let deltaTime = timestamp - lastDrawTime;
+
+    // Only draw if enough time has passed
+    if (deltaTime >= frameTime) {
+        lastDrawTime = timestamp;
+        draw();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+

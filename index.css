@@ -50,7 +50,6 @@
     background: #555;
 }
 
-
 body, html { margin: 0; overflow: hidden; font-family: notosans, sans-serif;}
 #screen1 { background: lightblue; }
 #screen2 { background: url("background.jpg"); background-size: 100vw 100vh;}
@@ -68,17 +67,20 @@ h1, h2, h3, h4, h5, h6{
     background-color: rgba(200,230,255,0.7);
     width: fit-content;
     border-radius: 1rem;
+    font-size: 2rem;
 }
 
 .questionPreview{
     position: absolute;
     top: 2rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(calc(-50% - 2rem));
     background-color: rgba(200,230,255,0.7);
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-  
+    padding: 1rem 2rem;  
+    margin: 0 2rem;
+    max-width: 100%;
+    width: max-content;
+    border: 2px solid dodgerblue;
 }
 
 .questionPreview:empty{
@@ -88,11 +90,13 @@ h1, h2, h3, h4, h5, h6{
 #lighthouse{
     width: 15vw;
     position: absolute;
-    bottom: 4px;
+    bottom: 10px;
     right: 0;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
+    display: block;
+    margin: auto;
 }
 
 #screen2Content{
@@ -110,10 +114,9 @@ h1, h2, h3, h4, h5, h6{
 .questionPreview2{
     margin: auto;
     padding: 1rem 2rem;
-    font-size: 2rem;
-    border: 2px solid dodgerblue;
     font-weight: bold;
     min-width: 30%;
+    border: 2px solid dodgerblue;
 }
 
 #answers{
