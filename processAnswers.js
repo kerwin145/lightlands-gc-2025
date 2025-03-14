@@ -41,13 +41,3 @@ async function processTextFile(filePath) {
         return [];
     }
 }
-
-let questionAndAnswers
-async function loadQuestions() {
-    questionAndAnswers = await processTextFile('answers.txt');
-    console.log(questionAndAnswers); // Now you have the processed data
-    // You can use the 'questions' variable here
-}
-
-// Call the function to load and process the questions
-loadQuestions();

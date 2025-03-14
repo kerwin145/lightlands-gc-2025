@@ -4,24 +4,62 @@ function switchScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+    updateQuestionPreview()
+}
+
+function updateQuestionPreview(){
+    if(hoveringOver1 != -1){
+        $(question_preview).html(questionAndAnswers[hoveringOver1]["question"] + "<br>" + "⭐".repeat(brightness1[hoveringOver1]))
+    }
+    else if(hoveringOver2 != -1){
+        $(question_preview).html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br>" + "⭐".repeat(brightness2[hoveringOver2]))
+    }else{
+        $(question_preview).html("")
+    }
 }
 
 var screen1Listener = (e) => {
-    let delta = 0
-    if(e.code == 'ArrowUp')
-        delta = 1
-    else if (e.code == 'ArrowDown')
-        delta = -1
-
-    if(hoveringOver1 != -1){
-        updateBrightness(brightness1, hoveringOver1, delta)
-        $(question_preview).html(questionAndAnswers[hoveringOver1]["question"] + "<br>" + "⭐".repeat(brightness1[hoveringOver1]))
-        
-    }else if(hoveringOver2 != -1){
-        updateBrightness(brightness2, hoveringOver2, delta)
-        $(question_preview).html(questionAndAnswers[hoveringOver2 + 3]["question"] + "<br>" + "⭐".repeat(brightness2[hoveringOver2]))
+    console.log(e.code)
+    if(e.code == 'ArrowUp' || e.code == 'ArrowDown'){
+        let delta = 0
+        if(e.code == 'ArrowUp') 
+            delta = 1
+        else if (e.code == 'ArrowDown')
+            delta = -1
+    
+        if(hoveringOver1 != -1){
+            updateBrightness(brightness1, hoveringOver1, delta)
+        }else if(hoveringOver2 != -1){
+            updateBrightness(brightness2, hoveringOver2, delta)
+        }
+        updateQuestionPreview()
     }
+    else if(e.code == 'KeyR'){
+        let confirmReset = confirm("Are you sure you want to reset your progress?");
+        if (confirmReset) {
+            // Reset answered arrays to match current dimensions
+            answered1 = new Array(LAYER1_COUNT).fill(null).map((_, idx) => 
+                new Array(questionAndAnswers[idx]["answers"].length).fill(false)
+            );
+            answered2 = new Array(LAYER2_COUNT).fill(null).map((_, idx) => 
+                new Array(questionAndAnswers[idx + LAYER1_COUNT]["answers"].length).fill(false)
+            );
 
+            // Save the reset arrays to localStorage
+            localStorage.setItem("answered1", JSON.stringify(answered1));
+            localStorage.setItem("answered2", JSON.stringify(answered2));
+
+            // Reset brightness values
+            brightness1 = answered1.map(answers => answers.filter(Boolean).length);
+            brightness2 = answered2.map(answers => answers.filter(Boolean).length);
+
+            updateQuestionPreview()
+
+            alert("Progress has been reset.");
+            console.log("Progress reset:", { answered1, answered2, brightness1, brightness2 });
+        }
+    }
+    
 }
 var screen2Listener
 
@@ -30,6 +68,7 @@ function prepareScreen1(){
         screen.removeEventListener('keyup', screen2Listener);
     canvas.addEventListener('keyup', screen1Listener)
     canvas.focus()
+    $(question_preview).text("")
 }
 
 /* Anchored at bottom middle by default */
@@ -134,7 +173,58 @@ let brightnessMap = {
     "4": "brightness(0.71)",
     "5": "brightness(0.8)",
     "6": "brightness(1)"
-  }
+}
+
+
+// processAnswers.js
+let questionAndAnswers, answered1, answered2
+async function loadQuestions() {
+    questionAndAnswers = await processTextFile('answers.txt');
+}
+
+loadQuestions().then(() => {
+    console.log(questionAndAnswers);
+
+    // Retrieve stored answers or initialize new ones
+    let storedAnswered1 = JSON.parse(localStorage.getItem("answered1"));
+    let storedAnswered2 = JSON.parse(localStorage.getItem("answered2"));
+
+    let validStorage = 
+        storedAnswered1 && storedAnswered2 &&
+        storedAnswered1.length === LAYER1_COUNT &&
+        storedAnswered2.length === LAYER2_COUNT &&
+        storedAnswered1.every((arr, idx) => arr.length === questionAndAnswers[idx]["answers"].length) &&
+        storedAnswered2.every((arr, idx) => arr.length === questionAndAnswers[idx + LAYER1_COUNT]["answers"].length);
+
+    console.log(storedAnswered1)
+    console.log(storedAnswered2)
+    console.log(questionAndAnswers)
+    if (!validStorage) {
+        // Reset answered arrays to match current dimensions
+        answered1 = new Array(LAYER1_COUNT).fill(null).map((_, idx) => 
+            new Array(questionAndAnswers[idx]["answers"].length).fill(false)
+        );
+        answered2 = new Array(LAYER2_COUNT).fill(null).map((_, idx) => 
+            new Array(questionAndAnswers[idx + LAYER1_COUNT]["answers"].length).fill(false)
+        );
+
+        // Save the new empty arrays to localStorage
+        localStorage.setItem("answered1", JSON.stringify(answered1));
+        localStorage.setItem("answered2", JSON.stringify(answered2));
+        alert("Stored answers do not match the current question set or do not exist. Progress has been resetted");
+    } else {
+        // Use stored values if valid
+        answered1 = storedAnswered1;
+        answered2 = storedAnswered2;
+    }
+
+    // Update brightness based on the count of true values
+    brightness1 = answered1.map(answers => answers.filter(Boolean).length);
+    brightness2 = answered2.map(answers => answers.filter(Boolean).length);
+
+    console.log("Brightness1:", brightness1);
+    console.log("Brightness2:", brightness2);
+});
 
 /* Dragging ! */
 let isDragging = false;
@@ -240,7 +330,6 @@ function draw() {
         });
 
     }
-    console.log("update")
     // ctx.drawImage(treeLayer2, tree2X, 0, treeLayer2.width/scaleFactorTreeLayer2, treeLayer2.height/scaleFactorTreeLayer2);
 }
 
@@ -263,4 +352,4 @@ function gameLoop(timestamp) {
 }
 
 requestAnimationFrame(gameLoop);
-
+prepareScreen1()
